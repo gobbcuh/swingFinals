@@ -5,13 +5,12 @@ import java.awt.event.ActionListener;
 
 public class Main extends JFrame {
     public Main() {
-        // Set up the main frame
-        setTitle("Covalent Hotel Reservation");
+
+        setTitle("Covalent Hotel");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Create main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
         
