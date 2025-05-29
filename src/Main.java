@@ -2,10 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URL;
 
 public class Main extends JFrame {
     public Main() {
-
         setTitle("Covalent Hotel");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -16,17 +16,26 @@ public class Main extends JFrame {
         
         // Create header panel with logo
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBackground(Color.BLACK);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Logo label (upper left)
-        JLabel logoLabel = new JLabel("COVALENT");
-        logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        logoLabel.setForeground(new Color(0, 102, 204)); // Blue color
+        // Logo label (upper left) - using image
+        ImageIcon smallLogoIcon = createImageIcon("elements/logo.png", "Small Logo");
+        JLabel logoLabel = new JLabel();
+        if (smallLogoIcon != null) {
+            // Scale the image to a smaller size for the header
+            Image smallImage = smallLogoIcon.getImage().getScaledInstance(80, 40, Image.SCALE_SMOOTH);
+            logoLabel.setIcon(new ImageIcon(smallImage));
+        } else {
+            // Fallback to text if image not found
+            logoLabel.setText("COVALENT");
+            logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
+            logoLabel.setForeground(new Color(0, 102, 204));
+        }
         
         // Navigation panel
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        navPanel.setBackground(Color.WHITE);
+        navPanel.setBackground(Color.BLACK);
         
         // Search field
         JTextField searchField = new JTextField(15);
@@ -59,9 +68,18 @@ public class Main extends JFrame {
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setBackground(Color.WHITE);
         
-        JLabel mainLogo = new JLabel("<html><center>COVALENT<br>HOTEL</center></html>");
-        mainLogo.setFont(new Font("Arial", Font.BOLD, 48));
-        mainLogo.setForeground(new Color(0, 102, 204)); // Blue color
+        ImageIcon largeLogoIcon = createImageIcon("elements/logo.png", "Large Logo");
+        JLabel mainLogo = new JLabel();
+        if (largeLogoIcon != null) {
+            // Scale the image to a larger size for the center
+            Image largeImage = largeLogoIcon.getImage().getScaledInstance(300, 150, Image.SCALE_SMOOTH);
+            mainLogo.setIcon(new ImageIcon(largeImage));
+        } else {
+            // Fallback to text if image not found
+            mainLogo.setText("<html><center>COVALENT<br>HOTEL</center></html>");
+            mainLogo.setFont(new Font("Arial", Font.BOLD, 48));
+            mainLogo.setForeground(new Color(0, 102, 204));
+        }
         
         centerPanel.add(mainLogo);
         
@@ -72,7 +90,7 @@ public class Main extends JFrame {
         
         JButton reserveButton = new JButton("RESERVE NOW!");
         reserveButton.setFont(new Font("Arial", Font.BOLD, 18));
-        reserveButton.setBackground(new Color(0, 102, 204)); // Blue color
+        reserveButton.setBackground(new Color(0, 102, 204));
         reserveButton.setForeground(Color.WHITE);
         reserveButton.setPreferredSize(new Dimension(200, 50));
         
@@ -88,6 +106,17 @@ public class Main extends JFrame {
         
         // Set visible
         setVisible(true);
+    }
+    
+    /** Returns an ImageIcon, or null if the path was invalid. */
+    protected ImageIcon createImageIcon(String path, String description) {
+        URL imgURL = getClass().getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL, description);
+        } else {
+            System.err.println("Couldn't find file: " + path);
+            return null;
+        }
     }
     
     public static void main(String[] args) {
