@@ -3,8 +3,39 @@ package system;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.InputStream;
 
 public class MainPage extends JFrame {
+    // Load the Libre Baskerville font
+    private Font loadLibreBaskerville(float size, int style) {
+        try {
+            // Try loading the font file from resources
+            InputStream is = getClass().getResourceAsStream("elements/LibreBaskerville-Regular.ttf");
+            if (is == null) {
+                // Fallback to filesystem if resource is not found
+                java.io.File file = new java.io.File("elements/LibreBaskerville-Regular.ttf");
+                if (file.exists()) {
+                    is = new java.io.FileInputStream(file);
+                } else {
+                    throw new Exception("Font file not found at elements/LibreBaskerville-Regular.ttf");
+                }
+            }
+            Font font = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(style, size);
+            if (!"Libre Baskerville".equals(font.getFamily())) {
+                throw new Exception("Font family mismatch, expected Libre Baskerville");
+            }
+            // Register the font with the graphics environment to ensure availability
+            java.awt.GraphicsEnvironment ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(font);
+            System.out.println("Loaded Libre Baskerville font with size " + size + " and style " + style);
+            return font;
+        } catch (Exception e) {
+            System.err.println("Error loading Libre Baskerville font: " + e.getMessage());
+            // Fallback to SansSerif if font loading fails
+            return new Font("SansSerif", Font.PLAIN, (int) size);
+        }
+    }
+
     public MainPage() {
         setTitle("Covalent Hotel");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -12,52 +43,89 @@ public class MainPage extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // GIF Background - Fixed loading
-        JLabel backgroundLabel = new JLabel();
-        try {
-            // Try loading from file system first
-            ImageIcon gifIcon = new ImageIcon("elements/covalent-gif.gif");
-            if (gifIcon.getImageLoadStatus() != MediaTracker.COMPLETE) {
-                // Fallback to class loader if file system fails
-                gifIcon = new ImageIcon(getClass().getResource("/elements/covalent-gif.gif"));
+        // GIF Background - Enhanced loading with proper display
+        JLabel backgroundLabel = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                try {
+                    // Ensure the label is visible and has a valid size
+                    if (!isVisible() || getWidth() <= 0 || getHeight() <= 0) {
+                        System.out.println(
+                                "Background label not visible or has invalid size: " + getWidth() + "x" + getHeight());
+                        repaint();
+                        return;
+                    }
+                    super.paintComponent(g);
+                    // Try loading from the absolute path first
+                    Image image = null;
+                    String primaryPath = "C:/Users/User/OneDrive/Desktop/oak/OOP_Finals/swingFinals/elements/covalent-gif.gif";
+                    System.out.println("Attempting to load GIF from: " + primaryPath);
+                    java.io.File file = new java.io.File(primaryPath);
+                    if (file.exists() && file.canRead()) {
+                        System.out.println("File found and readable at " + primaryPath);
+                        try (java.io.InputStream is = new java.io.FileInputStream(file)) {
+                            byte[] data = is.readAllBytes();
+                            image = java.awt.Toolkit.getDefaultToolkit().createImage(data);
+                            java.awt.MediaTracker tracker = new java.awt.MediaTracker(this);
+                            tracker.addImage(image, 0);
+                            tracker.waitForID(0);
+                            if (tracker.isErrorID(0)) {
+                                System.out.println("GIF image load error from " + primaryPath);
+                                image = null;
+                            }
+                        } catch (java.io.IOException e) {
+                            System.out.println("Failed to read file from " + primaryPath + " - " + e.getMessage());
+                        } catch (InterruptedException e) {
+                            System.out.println("Image load interrupted from " + primaryPath + " - " + e.getMessage());
+                        }
+                    } else {
+                        System.out.println("File not found or not readable at " + primaryPath);
+                    }
+                    if (image != null) {
+                        System.out.println("Successfully loaded GIF from: " + primaryPath);
+                        Image scaledImg = image.getScaledInstance(getWidth(), getHeight(), Image.SCALE_DEFAULT);
+                        g.drawImage(scaledImg, 0, 0, this);
+                    } else {
+                        System.out.println("No valid image to display from " + primaryPath);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error in paintComponent: " + e.getMessage());
+                }
             }
-            backgroundLabel.setIcon(gifIcon);
-        } catch (Exception e) {
-            System.err.println("Error loading GIF: " + e.getMessage());
-            backgroundLabel.setBackground(Color.BLACK);
-            backgroundLabel.setOpaque(true);
-        }
+        };
         add(backgroundLabel, BorderLayout.CENTER);
 
-        // HEADER PANEL - COMPLETELY UNCHANGED
+        // Header Panel - COMPLETELY UNCHANGED
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(Color.BLACK);
         headerPanel.setPreferredSize(new Dimension(1280, 60));
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setOpaque(true);
 
-        // Header Icon (EXACTLY AS IN YOUR ORIGINAL CODE)
+        // Header Icon
         try {
             ImageIcon headerIconImg = new ImageIcon("elements/logo.png");
             if (headerIconImg.getImageLoadStatus() == MediaTracker.COMPLETE) {
                 JLabel headerIcon = new JLabel(
-                        new ImageIcon(headerIconImg.getImage().getScaledInstance(65, 40, Image.SCALE_SMOOTH)));
+                        new ImageIcon(headerIconImg.getImage().getScaledInstance(65, 40, Image.SCALE_DEFAULT)));
                 headerIcon.setPreferredSize(new Dimension(60, 60));
                 headerPanel.add(headerIcon, BorderLayout.WEST);
             } else {
                 System.err.println("Header logo not found!");
                 JLabel placeholder = new JLabel("LOGO");
                 placeholder.setForeground(Color.WHITE);
+                placeholder.setFont(loadLibreBaskerville(16, Font.BOLD));
                 headerPanel.add(placeholder, BorderLayout.WEST);
             }
         } catch (Exception e) {
             System.err.println("Error loading header logo: " + e.getMessage());
             JLabel placeholder = new JLabel("LOGO");
             placeholder.setForeground(Color.WHITE);
+            placeholder.setFont(loadLibreBaskerville(16, Font.BOLD));
             headerPanel.add(placeholder, BorderLayout.WEST);
         }
 
-        // Search and Menu Panel (EXACTLY AS IN YOUR ORIGINAL CODE)
+        // Search and Menu Panel
         JPanel searchMenuPanel = new JPanel();
         searchMenuPanel.setOpaque(false);
         searchMenuPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -104,8 +172,8 @@ public class MainPage extends JFrame {
         JPopupMenu dropdownMenu = new JPopupMenu();
         JMenuItem registerItem = new JMenuItem("Register");
         JMenuItem faqsItem = new JMenuItem("FAQs");
-        registerItem.setFont(new Font("Libre Baskerville", Font.PLAIN, 14));
-        faqsItem.setFont(new Font("Libre Baskerville", Font.PLAIN, 14));
+        registerItem.setFont(loadLibreBaskerville(14, Font.PLAIN));
+        faqsItem.setFont(loadLibreBaskerville(14, Font.PLAIN));
         dropdownMenu.add(registerItem);
         dropdownMenu.add(faqsItem);
 
@@ -117,37 +185,38 @@ public class MainPage extends JFrame {
         headerPanel.add(searchMenuPanel, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
-        // Main Content Panel with adjusted spacing
+        // Main Content Panel
         JPanel mainPanel = new JPanel();
         mainPanel.setOpaque(false);
         mainPanel.setLayout(null);
         add(mainPanel, BorderLayout.CENTER);
 
-        // Overlay Panel with adjusted vertical position (moved up higher)
+        // Overlay Panel
         JPanel overlayPanel = new JPanel();
         overlayPanel.setLayout(new BoxLayout(overlayPanel, BoxLayout.Y_AXIS));
         overlayPanel.setOpaque(false);
-        overlayPanel.setBounds(0, 55, 1280, 400); // Changed y-position from 100 to 80 (moved up)
+        overlayPanel.setBounds(0, 55, 1280, 400);
 
-        // Logo (unchanged except vertical position)
+        // Logo
         try {
             ImageIcon overlayHexagonImg = new ImageIcon("elements/logo.png");
             if (overlayHexagonImg.getImageLoadStatus() == MediaTracker.COMPLETE) {
                 JLabel overlayHexagon = new JLabel(
-                        new ImageIcon(overlayHexagonImg.getImage().getScaledInstance(150, 100, Image.SCALE_SMOOTH)));
+                        new ImageIcon(overlayHexagonImg.getImage().getScaledInstance(150, 90, Image.SCALE_DEFAULT)));
                 overlayHexagon.setAlignmentX(Component.CENTER_ALIGNMENT);
                 overlayPanel.add(overlayHexagon);
-                overlayPanel.add(Box.createVerticalStrut(15)); // Reduced space from 20 to 15
+                overlayPanel.add(Box.createVerticalStrut(15));
             }
         } catch (Exception e) {
             System.err.println("Error loading overlay logo: " + e.getMessage());
             JLabel placeholder = new JLabel("[LOGO]");
             placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+            placeholder.setFont(loadLibreBaskerville(24, Font.BOLD));
             overlayPanel.add(placeholder);
             overlayPanel.add(Box.createVerticalStrut(15));
         }
 
-        // Text Overlay with pink background (completely unchanged)
+        // Text Overlay with pink background
         JPanel textOverlay = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -172,22 +241,22 @@ public class MainPage extends JFrame {
 
         JLabel titleLabel = new JLabel(
                 "<html><center><span style='font-size: 60px; font-weight: 400;'>COVALENT</span><br><span style='font-size: 24px; font-weight: 420;'>HOTEL</span></center></html>");
-        titleLabel.setFont(new Font("Libre Baskerville", Font.PLAIN, 14));
+        titleLabel.setFont(loadLibreBaskerville(14, Font.PLAIN));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titleLabel.setForeground(Color.BLACK);
         textOverlay.add(titleLabel, BorderLayout.CENTER);
 
         overlayPanel.add(textOverlay);
-        overlayPanel.add(Box.createVerticalStrut(30)); // Reduced from 40 to 30 for tighter spacing
+        overlayPanel.add(Box.createVerticalStrut(30));
         mainPanel.add(overlayPanel);
 
-        // Reserve Button with adjusted position (moved up)
+        // Reserve Button
         JButton reserveButton = new JButton("RESERVE NOW!");
-        reserveButton.setFont(new Font("Libre Baskerville", Font.PLAIN, 18));
+        reserveButton.setFont(loadLibreBaskerville(18, Font.PLAIN));
         reserveButton.setBackground(new Color(255, 230, 240));
         reserveButton.setForeground(Color.BLACK);
         reserveButton.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        reserveButton.setBounds(540, 470, 200, 50); // Changed y-position from 500 to 450
+        reserveButton.setBounds(540, 470, 200, 50);
         reserveButton.setFocusPainted(false);
         reserveButton.addMouseListener(new MouseAdapter() {
             @Override
